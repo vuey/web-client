@@ -20,10 +20,10 @@ export const mutations = {
     state.balances = balances
   },
   [types.SET_MOVEMENTS] (state, movements) {
-    state.history = movements
+    state.movements = movements
   },
-  [types.CONCAT_MOVEMENTS] (state, entries) {
-    state.history = state.history.concat(entries)
+  [types.CONCAT_MOVEMENTS] (state, movements) {
+    state.movements = state.movements.concat(movements)
   },
 }
 
@@ -36,10 +36,14 @@ export const actions = {
     }
 
     return api().getWithSignature(`/${HORIZON_VERSION_PREFIX}/history`, {
+      page: {
+        order: 'desc',
+      },
       filter: {
         account: getters[types.accountId],
         balance: balance.id,
       },
+      include: ['effect', 'operation.details'],
     })
   },
 
@@ -63,6 +67,7 @@ export const getters = {
 }
 
 export const movementHistoryModule = {
+  namespaced: true,
   state,
   getters,
   actions,

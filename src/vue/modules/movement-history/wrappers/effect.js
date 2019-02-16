@@ -5,6 +5,7 @@
  */
 export class BalanceChangedEffect {
   constructor (record) {
+    this.asset = 'QQQ' // TODO
     this.amount = record.amount
     this.fixedFee = record.fee.fixed
     this.calculatedPercentFee = record.fee.calculatedPercent

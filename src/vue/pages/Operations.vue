@@ -69,49 +69,48 @@
       </template>
       <transfer-form />
     </drawer>
-
-    <template v-if="!isLoadFailed">
-      <div
-        class="op-history__list"
-        v-if="isLoaded"
-      >
-        <template v-if="operations.length">
-          <op-list :list="operations" />
-        </template>
-        <template v-else>
-          <div class="op-history__no-transactions">
-            <i class="op-history__no-tx-icon mdi mdi-trending-up" />
-            <h2>{{ 'op-pages.no-operation-history' | globalize }}</h2>
-            <p>{{ 'op-pages.here-will-be-the-list' | globalize }}</p>
-          </div>
-        </template>
-        <collection-loader
-          :first-page-loader="pageLoader"
-          @first-page-load="setFirstPageData"
-          @next-page-load="setNextPageData"
-        />
-      </div>
-    </template>
-
-    <template v-else>
-      <div class="op-history__error">
-        <i class="op-history__error-icon mdi mdi-comment-alert-outline" />
-        <h2>{{ 'op-pages.something-went-wrong' | globalize }}</h2>
-        <p>{{ 'op-pages.can-not-load-assets' | globalize }}</p>
-      </div>
-    </template>
+    <!--<template v-if="!isLoadFailed">-->
+    <!--<div class="op-history__list" v-if="isLoaded">-->
+    <movements-history-module
+      v-if="asset.code"
+      :wallet="$store.getters.wallet"
+      :asset-code="asset.code"
+      :config="config"
+    />
+    <!--<template v-else>-->
+    <!--<div class="op-history__no-transactions">-->
+    <!--<i class="op-history__no-tx-icon mdi mdi-trending-up" />-->
+    <!--<h2>{{ 'op-pages.no-operation-history' | globalize }}</h2>-->
+    <!--<p>{{ 'op-pages.here-will-be-the-list' | globalize }}</p>-->
+    <!--</div>-->
+    <!--</template>-->
+    <!--<collection-loader-->
+    <!--:first-page-loader="pageLoader"-->
+    <!--@first-page-load="setFirstPageData"-->
+    <!--@next-page-load="setNextPageData"-->
+    <!--/>-->
+    <!--</div>-->
+    <!--</template>-->
+    <!--<template v-else>-->
+    <!--<div class="op-history__error">-->
+    <!--<i class="op-history__error-icon mdi mdi-comment-alert-outline" />-->
+    <!--<h2>{{ 'op-pages.something-went-wrong' | globalize }}</h2>-->
+    <!--<p>{{ 'op-pages.can-not-load-assets' | globalize }}</p>-->
+    <!--</div>-->
+    <!--</template>-->
   </div>
 </template>
 
 <script>
 import SelectField from '@/vue/fields/SelectField'
-import CollectionLoader from '@/vue/common/CollectionLoader'
 import TopBar from '@/vue/common/TopBar'
 import Drawer from '@/vue/common/Drawer'
 import WithdrawalForm from '@/vue/forms/WithdrawalForm'
 import DepositForm from '@/vue/forms/DepositForm'
 import TransferForm from '@/vue/forms/TransferForm'
-import OpList from '@/vue/common/OpList'
+
+import MovementsHistoryModule from '@modules/movement-history'
+
 import { Sdk } from '@/sdk'
 import { mapGetters, mapActions } from 'vuex'
 import { vuexTypes } from '@/vuex/types'
@@ -120,18 +119,18 @@ import { RecordWrapper } from '@/js/records'
 import { MatchRecord } from '@/js/records/operations/match.record'
 import { AssetRecord } from '@/js/records/entities/asset.record'
 
-export default {
-  name: 'op-history',
+import config from '../../config'
 
+export default {
+  name: 'operations-page',
   components: {
     SelectField,
-    CollectionLoader,
     TopBar,
     Drawer,
     WithdrawalForm,
     DepositForm,
     TransferForm,
-    OpList,
+    MovementsHistoryModule,
   },
 
   data: _ => ({
@@ -143,14 +142,26 @@ export default {
     isWithdrawalDrawerShown: false,
     isDepositDrawerShown: false,
     isTransferDrawerShown: false,
-    pageLoader: () => { },
+    pageLoader: () => {},
+    config: {
+      horizonURL: config.HORIZON_SERVER,
+    },
   }),
 
   computed: {
     ...mapGetters([
       vuexTypes.account,
+      vuexTypes.accountBalances,
       vuexTypes.accountId,
     ]),
+    assetCodes () {
+      return this.accountBalances.map(item => item.asset)
+    },
+    balanceId () {
+      return this.account.balances
+        .find(item => item.asset === this.assetCode)
+        .balanceId
+    },
   },
 
   watch: {
